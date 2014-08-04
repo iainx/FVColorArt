@@ -10,7 +10,6 @@
 
 @interface FVColorArt : NSObject
 
-@property (readonly, nonatomic, strong) NSImage *pixelatedImage;
 @property (readonly, strong) NSColor *backgroundColor;
 @property (readonly, strong) NSColor *primaryColor;
 @property (readonly, strong) NSColor *secondaryColor;

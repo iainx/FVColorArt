@@ -154,9 +154,6 @@ static CGFloat pixelSize = 10.0;
     }
     
     NSBitmapImageRep *rep = [self RGBABitmapImageRepWithCImage:outputImage];
-    
-    self.pixelatedImage = [[NSImage alloc] initWithSize:inputImage.extent.size];
-    [self.pixelatedImage addRepresentation:rep];
     [self coloursFromImageRep:rep];
 }
 
