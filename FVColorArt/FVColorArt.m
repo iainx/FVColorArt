@@ -97,7 +97,7 @@ static CGFloat pixelSize = 10.0;
     CGImageRef cgImage = [image CGImageForProposedRect:NULL context:NULL hints:NULL];
     CIImage *inputImage = [[CIImage alloc] initWithCGImage:cgImage];
 
-    NSSize size = inputImage.extent.size;
+    CGSize size = inputImage.extent.size;
     
     if (size.width > 600 || size.height > 600) {
         CGFloat ratio;
@@ -138,7 +138,6 @@ static CGFloat pixelSize = 10.0;
         return;
     }
     
-    //pixelSize = 1.0;
     if (pixelSize > 1.0) {
         CIFilter *filter = [CIFilter filterWithName:@"CIPixellate"];
         [filter setDefaults];
@@ -154,7 +153,8 @@ static CGFloat pixelSize = 10.0;
     }
     
     NSBitmapImageRep *rep = [self RGBABitmapImageRepWithCImage:outputImage];
-    [self coloursFromImageRep:rep];
+    
+    [self.pixelatedImage addRepresentation:rep];
 }
 
 #define GET_PIXEL_AT_XY(data, x, y, rowSpan) (data + (x * 4) + (y * rowSpan))
@@ -296,14 +296,14 @@ insertIntoMapOrIncrement(NSMapTable *mapTable,
         
         NSMapInsert(mapTable, (const void *)key64, (const void *)taggedValue);
     } else {
-        UInt64 taggedValue = (UInt64)value;
+        CountedColor taggedValue = (CountedColor)value;
         taggedValue++;
         
         NSMapInsert(mapTable, (const void *)key64, (const void *)taggedValue);
     }
 }
 
-- (void)generateBackgroundColors:(UInt64 **)backgroundColors
+- (void)generateBackgroundColors:(CountedColor **)backgroundColors
                  backgroundCount:(NSUInteger *)backgroundCount
                    forBitmapData:(unsigned char *)bitmapData
                            width:(NSInteger)pixelsWide
@@ -332,28 +332,28 @@ insertIntoMapOrIncrement(NSMapTable *mapTable,
         
         // Squash the rgba values into one value
         // assuming 8bpp
-        UInt32 squashed = SQUASH_RGBA(r, g, b, a);
+        SquashedColor squashed = SQUASH_RGBA(r, g, b, a);
         insertIntoMapOrIncrement(backgroundMap, squashed);
     }
     
     *backgroundCount = NSCountMapTable(backgroundMap);
     
-    UInt64 *backgroundArray;
+    CountedColor *backgroundArray;
     
-    backgroundArray = malloc(sizeof(UInt64) * (*backgroundCount));
+    backgroundArray = malloc(sizeof(CountedColor) * (*backgroundCount));
     fillArrayFromMapTable(backgroundMap, &backgroundArray);
     NSFreeMapTable(backgroundMap);
     
     *backgroundColors = backgroundArray;
 }
 
-- (void)generateForegroundColors:(UInt64 **)foregroundColors
+- (void)generateForegroundColors:(CountedColor **)foregroundColors
                  foregroundCount:(NSUInteger *)foregroundCount
                    forBitmapData:(unsigned char *)bitmapData
                       pixelsWide:(NSInteger)pixelsWide
                       pixelsHigh:(NSInteger)pixelsHigh
                          rowSpan:(NSInteger)rowSpan
-              withBackgroundRGBA:(UInt32)backgroundRGBA
+              withBackgroundRGBA:(SquashedColor)backgroundRGBA
 {
     BOOL backgroundIsDark = isDarkColor(backgroundRGBA);
     BOOL lookingForDarkColor = !backgroundIsDark;
@@ -396,21 +396,21 @@ insertIntoMapOrIncrement(NSMapTable *mapTable,
     
     *foregroundCount = NSCountMapTable(foregroundMap);
     
-    UInt64 *foregroundArray;
+    CountedColor *foregroundArray;
     
-    foregroundArray = malloc(sizeof(UInt64) * (*foregroundCount));
+    foregroundArray = malloc(sizeof(CountedColor) * (*foregroundCount));
     fillArrayFromMapTable(foregroundMap, &foregroundArray);
     NSFreeMapTable(foregroundMap);
     
     *foregroundColors = foregroundArray;
 }
 
-- (NSColor *)backgroundColorFromColors:(UInt64 *)colors
+- (NSColor *)backgroundColorFromColors:(CountedColor *)colors
                                  count:(NSUInteger)count
-                                  rgba:(UInt32 *)backgroundRGBA
+                                  rgba:(SquashedColor *)backgroundRGBA
 {
     NSUInteger proposedColor = colors[0];
-    UInt32 rgba = UNTAG_RGBA(proposedColor);
+    SquashedColor rgba = UNTAG_RGBA(proposedColor);
     
     // Don't really want a black/white background
     if (!isBlackOrWhite(rgba)) {
@@ -447,7 +447,7 @@ insertIntoMapOrIncrement(NSMapTable *mapTable,
     SquashedColor pRGBA = 0, sRGBA = 0;
     
     for (NSInteger i = 0; i < count; i++) {
-        UInt32 proposedRGBA = UNTAG_RGBA(colors[i]);
+        SquashedColor proposedRGBA = UNTAG_RGBA(colors[i]);
         
         if (*primaryColor == nil) {
             *primaryColor = colorFromSquashedRGBA(proposedRGBA);
