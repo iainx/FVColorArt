@@ -25,7 +25,6 @@
 
 @interface FVColorArt ()
 
-@property (readwrite, nonatomic) NSImage *pixelatedImage;
 @property (readwrite, strong) NSColor *backgroundColor;
 @property (readwrite, strong) NSColor *primaryColor;
 @property (readwrite, strong) NSColor *secondaryColor;
@@ -153,8 +152,7 @@ static CGFloat pixelSize = 10.0;
     }
     
     NSBitmapImageRep *rep = [self RGBABitmapImageRepWithCImage:outputImage];
-    
-    [self.pixelatedImage addRepresentation:rep];
+    [self coloursFromImageRep:rep];    
 }
 
 #define GET_PIXEL_AT_XY(data, x, y, rowSpan) (data + (x * 4) + (y * rowSpan))
